@@ -1,0 +1,23 @@
+........................................sss                              [100%]
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.12.14-final-0 _______________
+
+Name                        Stmts   Miss  Cover   Missing
+---------------------------------------------------------
+src/analyst/__init__.py         0      0   100%
+src/analyst/api.py            108      7    94%   44, 81, 90, 94-95, 131-132
+src/analyst/cache.py           40      1    98%   48
+src/analyst/config.py          36      1    97%   43
+src/analyst/graph.py          114      5    96%   44, 46, 53, 79-80
+src/analyst/mcp_server.py      17     17     0%   3-32
+src/analyst/models.py          51      0   100%
+src/analyst/planner.py         29      0   100%
+src/analyst/seed.py            32      9    72%   77-84, 88
+src/analyst/sql.py              7      0   100%
+src/analyst/storage.py         25      7    72%   15-18, 22-23, 36-37, 45
+src/analyst/telemetry.py       24      8    67%   24-32
+src/analyst/tools.py           52      7    87%   43, 48, 55, 60, 62, 69, 75
+src/analyst/warehouse.py       28      3    89%   19-23
+---------------------------------------------------------
+TOTAL                         563     65    88%
+40 passed, 3 skipped in 6.91s

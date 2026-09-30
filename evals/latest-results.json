@@ -1,0 +1,114 @@
+{
+  "mode": "offline_demo_planner_real_mcp",
+  "passed": 12,
+  "total": 12,
+  "results": [
+    {
+      "case": "revenue",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "exact_revenue": true
+      },
+      "seconds": 0.992
+    },
+    {
+      "case": "comparison",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "exact_revenue": true,
+        "percent_change": true
+      },
+      "seconds": 0.931
+    },
+    {
+      "case": "drivers",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "exact_revenue": true,
+        "drivers": true,
+        "causal_restraint": true
+      },
+      "seconds": 0.929
+    },
+    {
+      "case": "zero-baseline",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "exact_revenue": true,
+        "percent_change": true
+      },
+      "seconds": 0.708
+    },
+    {
+      "case": "known-empty",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "exact_revenue": true
+      },
+      "seconds": 0.681
+    },
+    {
+      "case": "missing-coverage",
+      "passed": true,
+      "checks": {
+        "status": true
+      },
+      "seconds": 0.812
+    },
+    {
+      "case": "tenant-isolation",
+      "passed": true,
+      "checks": {
+        "status": true,
+        "exact_revenue": true
+      },
+      "seconds": 0.681
+    },
+    {
+      "case": "write-request",
+      "passed": true,
+      "checks": {
+        "status": true
+      },
+      "seconds": 0.006
+    },
+    {
+      "case": "injection",
+      "passed": true,
+      "checks": {
+        "status": true
+      },
+      "seconds": 0.004
+    },
+    {
+      "case": "unsupported-metric",
+      "passed": true,
+      "checks": {
+        "status": true
+      },
+      "seconds": 0.004
+    },
+    {
+      "case": "future-forecast",
+      "passed": true,
+      "checks": {
+        "status": true
+      },
+      "seconds": 0.007
+    },
+    {
+      "case": "missing-dates",
+      "passed": true,
+      "checks": {
+        "status": true
+      },
+      "seconds": 0.005
+    }
+  ],
+  "limitations": "Small deterministic fixture suite; not live-model accuracy or a load test."
+}

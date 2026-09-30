@@ -1,0 +1,60 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: analyst
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run scripts/bootstrap.py first}
+      READER_PASSWORD: ${READER_PASSWORD:?Run scripts/bootstrap.py first}
+      AUDIT_PASSWORD: ${AUDIT_PASSWORD:?Run scripts/bootstrap.py first}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infra/postgres:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U postgres -d analyst']
+      interval: 5s
+      timeout: 3s
+      retries: 15
+  redis:
+    image: redis:7-alpine
+    command: [redis-server, --maxmemory, 128mb, --maxmemory-policy, allkeys-lru]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  seed:
+    build: .
+    command: [python, -m, analyst.seed]
+    environment:
+      ENVIRONMENT: development
+      WAREHOUSE_URL: postgresql+asyncpg://postgres:${POSTGRES_PASSWORD}@postgres:5432/analyst
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: 'no'
+  api:
+    build: .
+    ports: ['127.0.0.1:8000:8000']
+    environment:
+      ENVIRONMENT: production
+      WAREHOUSE_URL: postgresql+asyncpg://analyst_reader:${READER_PASSWORD}@postgres:5432/analyst
+      AUDIT_URL: postgresql+asyncpg://analyst_audit:${AUDIT_PASSWORD}@postgres:5432/analyst
+      REDIS_URL: redis://redis:6379/0
+      API_KEY_HASHES: ${API_KEY_HASHES:?Run scripts/bootstrap.py first}
+      DATASET_REVISION: demo-v1
+      PLANNER_MODE: demo
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ['/tmp:size=64m,mode=1777']
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 1g
+    cpus: 1.0
+volumes:
+  pgdata:

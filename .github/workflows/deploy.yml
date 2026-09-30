@@ -1,0 +1,77 @@
+name: Approved ECS deployment
+on:
+  workflow_dispatch:
+    inputs:
+      approve_paid_changes:
+        description: 'I approve publishing this image and updating the paid ECS service'
+        required: true
+        type: boolean
+        default: false
+permissions:
+  contents: read
+  id-token: write
+  checks: read
+concurrency:
+  group: production-deployment
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: inputs.approve_paid_changes == true && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+      ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
+      ECS_SERVICE: ${{ vars.ECS_SERVICE }}
+      ECS_TASK_FAMILY: ${{ vars.ECS_TASK_FAMILY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.12.17'
+          python-version: '3.12'
+      - run: uv sync --frozen
+      - run: uv run ruff check src tests evals scripts
+      - run: uv run pytest -m 'not integration'
+      - run: uv run python evals/run.py
+      - name: Require successful full CI for this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          PASSED=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/check-runs" \
+            --jq '[.check_runs[] | select(.name == "verify" and .conclusion == "success")] | length')
+          test "$PASSED" -gt 0 || { echo 'Full CI must pass for this commit first'; exit 1; }
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - id: login
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Build and push immutable commit tag
+        env:
+          REGISTRY: ${{ steps.login.outputs.registry }}
+        run: |
+          set -euo pipefail
+          IMAGE="$REGISTRY/$ECR_REPOSITORY:$GITHUB_SHA"
+          docker build -t "$IMAGE" .
+          docker push "$IMAGE"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+      - name: Register task revision and roll out
+        run: |
+          set -euo pipefail
+          aws ecs describe-task-definition --task-definition "$ECS_TASK_FAMILY" \
+            --query taskDefinition > current-task.json
+          jq --arg image "$IMAGE" \
+            'del(.taskDefinitionArn,.revision,.status,.requiresAttributes,.compatibilities,.registeredAt,.registeredBy) |
+             (.containerDefinitions[] | select(.name == "api") | .image) = $image' \
+            current-task.json > next-task.json
+          TASK_ARN=$(aws ecs register-task-definition --cli-input-json file://next-task.json \
+            --query taskDefinition.taskDefinitionArn --output text)
+          aws ecs update-service --cluster "$ECS_CLUSTER" --service "$ECS_SERVICE" \
+            --task-definition "$TASK_ARN" > /dev/null
+          aws ecs wait services-stable --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE"
+          ACTIVE=$(aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" \
+            --query 'services[0].taskDefinition' --output text)
+          test "$ACTIVE" = "$TASK_ARN" || { echo 'Deployment rolled back'; exit 1; }

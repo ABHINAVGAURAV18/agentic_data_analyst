@@ -1,0 +1,47 @@
+{
+  "report_id": "c9785375-ed68-4542-8bd4-2beca8c8351d",
+  "status": "completed",
+  "answer": "Revenue from 2026-08-01 to 2026-09-01 (exclusive): INR 2,400.00. Previous equally long period: INR 3,000.00; change: INR -600.00. Percentage change: -20.00%. Largest product contributions: Gadget: INR -1,100.00; Widget: INR 500.00. These are measured contributions, not proven causes. Causal analysis needs pricing, promotions, traffic or stock data.",
+  "plan": {
+    "operation": "drivers",
+    "start": "2026-08-01",
+    "end": "2026-09-01"
+  },
+  "evidence": {
+    "plan": {
+      "operation": "drivers",
+      "start": "2026-08-01",
+      "end": "2026-09-01"
+    },
+    "currency": "INR",
+    "dataset_revision": "demo-v1",
+    "covered": true,
+    "current_minor": 240000,
+    "previous_minor": 300000,
+    "products": [
+      {
+        "product": "Gadget",
+        "current_minor": 90000,
+        "previous_minor": 200000,
+        "delta_minor": -110000
+      },
+      {
+        "product": "Widget",
+        "current_minor": 150000,
+        "previous_minor": 100000,
+        "delta_minor": 50000
+      }
+    ],
+    "sql_template": "sales_by_product_v1",
+    "parameters": {
+      "start": "2026-08-01",
+      "end": "2026-09-01",
+      "previous_start": "2026-07-01"
+    },
+    "evidence_hash": "6acef319495f21a3a210e1aa0276a23ceb09be87eca2564b0e7f87371adebc51"
+  },
+  "percent_change": "-20.00",
+  "attempts": 1,
+  "cache_hit": false,
+  "planner_mode": "demo"
+}
